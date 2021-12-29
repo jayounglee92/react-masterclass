@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "react-query";
+import { Helmet } from "react-helmet";
 import {
   Switch,
   Route,
@@ -16,6 +17,7 @@ import Price from "./Price";
 const Title = styled.h1`
   font-size: 48px;
   color: ${(props) => props.theme.accentColor};
+  place-self: center;
 `;
 
 const Loader = styled.span`
@@ -32,8 +34,6 @@ const Container = styled.div`
 const Header = styled.header`
   height: 15vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
 `;
 
 const Overview = styled.div`
@@ -79,6 +79,22 @@ const Tab = styled.span<{ isActive: boolean }>`
     props.isActive ? props.theme.accentColor : props.theme.textColor};
   a {
     padding: 7px 0px;
+    display: block;
+  }
+`;
+
+const BackBtn = styled.div`
+  flex: 0.5;
+  place-self: center;
+  a {
+    width: 70px;
+    text-align: center;
+    vertical-align: middle;
+    border: 1px solid ${(props) => props.theme.textColor};
+    color: ${(props) => props.theme.textColor};
+    border-radius: 5px;
+    font-weight: 900;
+    padding: 7px 10px;
     display: block;
   }
 `;
@@ -157,13 +173,24 @@ function Coin() {
   );
   const { isLoading: tickersLoading, data: tickersData } = useQuery<PriceData>(
     ["tickers", coinId],
-    () => fetchCoinTickers(coinId)
+    () => fetchCoinTickers(coinId),
+    {
+      refetchInterval: 5000,
+    }
   );
   const loading = infoLoading || tickersLoading;
 
   return (
     <Container>
+      <Helmet>
+        <title>
+          {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
+        </title>
+      </Helmet>
       <Header>
+        <BackBtn>
+          <Link to="/">Back</Link>
+        </BackBtn>
         <Title>
           {state?.name ? state.name : loading ? "Loading..." : infoData?.name}
         </Title>
@@ -182,8 +209,8 @@ function Coin() {
               <span>${infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
-              <span>Open Source:</span>
-              <span>{infoData?.open_source ? "Yes" : "No"}</span>
+              <span>Price:</span>
+              <span>${tickersData?.quotes.USD.price.toFixed(3)}</span>
             </OverviewItem>
           </Overview>
           <Description>{infoData?.description}</Description>
@@ -207,10 +234,10 @@ function Coin() {
           </Tabs>
           <Switch>
             <Route path={`/:coinId/price`}>
-              <Price />
+              <Price tickersData={tickersData} />
             </Route>
             <Route path={`/:coinId/chart`}>
-              <Chart />
+              <Chart coinId={coinId} />
             </Route>
           </Switch>
         </>
